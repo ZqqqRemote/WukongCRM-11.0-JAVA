@@ -18,6 +18,7 @@ import com.kakarote.crm.entity.PO.CrmCustomerSetting;
 import com.kakarote.crm.entity.VO.CrmDataCheckVO;
 import com.kakarote.crm.entity.VO.CrmInfoNumVO;
 import com.kakarote.crm.entity.VO.CrmModelFiledVO;
+import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -261,6 +262,8 @@ public interface ICrmCustomerService extends BaseService<CrmCustomer> {
     List<String> eventCustomer(CrmEventBO crmEventBO);
 
     BasePage<Map<String,Object>> eventCustomerPageList(QueryEventCrmPageBO eventCrmPageBO);
+
+    List<JSONObject> queryNextTimeList();
 
     List<Integer> forgottenCustomer(Integer day, List<Long> userIds, String search);
 

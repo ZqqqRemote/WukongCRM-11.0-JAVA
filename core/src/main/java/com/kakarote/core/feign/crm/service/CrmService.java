@@ -1,5 +1,6 @@
 package com.kakarote.core.feign.crm.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.kakarote.core.common.Result;
 import com.kakarote.core.entity.BasePage;
 import com.kakarote.core.feign.crm.entity.CrmSearchBO;
@@ -123,4 +124,7 @@ public interface CrmService {
     @ApiOperation("查询列表页数据")
     Result<BasePage<Map<String, Object>>> queryCustomerPageList(@RequestBody CrmSearchBO search);
 
+    @PostMapping("/crmCustomer/queryNextTimeList")
+    @ApiOperation("查询两个月到期客户")
+    Result<List<JSONObject>> queryNextTimeList();
 }

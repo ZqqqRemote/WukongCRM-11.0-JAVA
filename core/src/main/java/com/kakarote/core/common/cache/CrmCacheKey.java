@@ -16,6 +16,11 @@ public interface CrmCacheKey {
     String CRM_CUSTOMER_JOB_CACHE_KEY = "CrmCustomerJob:";
 
     /**
+     * CRM定时发送消息
+     */
+    String CRM_MESSAGE_CACHE_KEY = "CrmMessageJob:";
+
+    /**
      * crm待办事项数量缓存key
      */
     String CRM_BACKLOG_NUM_CACHE_KEY = "queryBackLogNum:";

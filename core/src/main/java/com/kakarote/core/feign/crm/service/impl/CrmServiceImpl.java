@@ -1,5 +1,6 @@
 package com.kakarote.core.feign.crm.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.kakarote.core.common.Result;
 import com.kakarote.core.entity.BasePage;
 import com.kakarote.core.feign.crm.entity.CrmSearchBO;
@@ -144,5 +145,10 @@ public class CrmServiceImpl implements CrmService {
     @Override
     public Result<BasePage<Map<String, Object>>> queryCustomerPageList(CrmSearchBO search) {
         return Result.ok(new BasePage<>());
+    }
+
+    @Override
+    public Result<List<JSONObject>> queryNextTimeList() {
+        return Result.ok(new ArrayList<>());
     }
 }

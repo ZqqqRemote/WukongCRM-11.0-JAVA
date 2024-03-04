@@ -256,6 +256,11 @@
         from `wk_crm_customer`
         where status != 3 and owner_user_id = #{userId} and to_days(next_time) = to_days(#{time})
     </select>
+    <select id="nextTimeList" resultType="com.alibaba.fastjson.JSONObject">
+        select customer_name, customer_id
+        from `wk_crm_customer`
+        where to_days(next_time) &lt; to_days(#{time})
+    </select>
     <select id="forgottenCustomer" resultType="java.lang.Integer">
         select customer_id
         from `wk_crm_customer`  where  deal_status = 0  and status != 3 and (to_days(now()) - ifnull(to_days(last_time),to_days(create_time)))> #{day}

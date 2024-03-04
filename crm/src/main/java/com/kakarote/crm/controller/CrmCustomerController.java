@@ -548,5 +548,13 @@ public class CrmCustomerController {
 		String customerName = crmCustomerService.getCustomerName(customerId);
 		return R.ok(customerName);
 	}
+
+    @ParamAspect
+    @PostMapping("/queryNextTimeList")
+    @ApiExplain("查询两个月到期的客户")
+    public Result<List<JSONObject>> queryNextTimeList() {
+        List<JSONObject> jsonObjects = crmCustomerService.queryNextTimeList();
+        return R.ok(jsonObjects);
+    }
 }
 

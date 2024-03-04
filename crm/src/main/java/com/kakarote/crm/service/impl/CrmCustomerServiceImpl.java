@@ -1482,6 +1482,23 @@ public class CrmCustomerServiceImpl extends BaseServiceImpl<CrmCustomerMapper, C
         return page;
     }
 
+    public List<JSONObject> queryNextTimeList() {
+        Date time = new Date();
+        Calendar calendar = Calendar.getInstance();
+        // 将当前时间设置到Calendar对象中
+        calendar.setTime(time);
+
+        // 将当前时间加上两个月
+        calendar.add(Calendar.MONTH, 2);
+
+        // 获取计算后的时间
+        Date newTime = calendar.getTime();
+        log.info("newTime=>{}", newTime);
+        List<JSONObject> res = getBaseMapper().nextTimeList(newTime);
+        log.info("res=>{}", res);
+        return res;
+    }
+
     @Override
     public List<Integer> forgottenCustomer(Integer day, List<Long> userIds, String search) {
         return getBaseMapper().forgottenCustomer(day, userIds, search);

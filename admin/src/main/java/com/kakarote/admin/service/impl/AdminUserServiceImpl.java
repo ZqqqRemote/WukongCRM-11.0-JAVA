@@ -881,16 +881,16 @@ public class AdminUserServiceImpl extends BaseServiceImpl<AdminUserMapper, Admin
             return;
         }
         JSONObject jsonObject = null;
-        try {
-            RSA rsa = SecureUtil.rsa((String) null, AdminConst.userPublicKey);
-            String fromBcd = rsa.decryptStrFromBcd(systemUserBO.getCode(), KeyType.PublicKey);
-            jsonObject = JSON.parseObject(fromBcd);
-        } catch (Exception e) {
-            throw new CrmException(AdminCodeEnum.ADMIN_PHONE_VERIFY_ERROR);
-        }
-        if (jsonObject == null) {
-            throw new CrmException(AdminCodeEnum.ADMIN_PHONE_VERIFY_ERROR);
-        }
+//        try {
+//            RSA rsa = SecureUtil.rsa((String) null, AdminConst.userPublicKey);
+//            String fromBcd = rsa.decryptStrFromBcd(systemUserBO.getCode(), KeyType.PublicKey);
+//            jsonObject = JSON.parseObject(fromBcd);
+//        } catch (Exception e) {
+//            throw new CrmException(AdminCodeEnum.ADMIN_PHONE_VERIFY_ERROR);
+//        }
+//        if (jsonObject == null) {
+//            throw new CrmException(AdminCodeEnum.ADMIN_PHONE_VERIFY_ERROR);
+//        }
 
         AdminUser adminUser = new AdminUser();
         adminUser.setUsername(systemUserBO.getUsername());
@@ -906,7 +906,8 @@ public class AdminUserServiceImpl extends BaseServiceImpl<AdminUserMapper, Admin
         save(adminUser);
         lambdaUpdate().set(AdminUser::getUserId, UserUtil.getSuperUser())
                 .eq(AdminUser::getUserId, adminUser.getUserId()).update();
-        adminUserConfigService.save(new AdminUserConfig(null, UserUtil.getSuperUser(), 1, "InitUserConfig", jsonObject.toJSONString(), "用户信息"));
+        // zqqq
+        adminUserConfigService.save(new AdminUserConfig(null, UserUtil.getSuperUser(), 1, "InitUserConfig", "管理员", "用户信息"));
         registerSeataToNacos();
     }
 
