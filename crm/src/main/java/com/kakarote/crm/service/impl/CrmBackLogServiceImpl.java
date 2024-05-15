@@ -3,7 +3,10 @@ package com.kakarote.crm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.date.DateField;
+import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.util.TypeUtils;
@@ -36,6 +39,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -87,6 +94,9 @@ public class CrmBackLogServiceImpl implements ICrmBackLogService {
 
     @Autowired
     private ICrmInvoiceService crmInvoiceService;
+
+    @Autowired
+    private ICrmActivityService crmActivityService;
 
     /**
      * 查询待办事项数量
@@ -158,83 +168,84 @@ public class CrmBackLogServiceImpl implements ICrmBackLogService {
             Integer followLeads = mapper.followLeadsNum(paras);
             kv.put("followLeads", followLeads);
         }
-        if (authList.contains("crm:contract:index")) {
-            AdminConfig adminConfig = adminService.queryFirstConfigByName("expiringContractDays").getData();
-            if (1 == adminConfig.getStatus()) {
-                paras.put("remindDay", adminConfig.getValue());
-                Integer endContract = mapper.endContractNum(paras);
-                kv.put("endContract", endContract);
-            }
-            List<Integer> ids = examineService.queryCrmExamineIdList(1, 1).getData();
-            Integer checkContract = null;
-            if (CollUtil.isNotEmpty(ids)) {
-                LambdaQueryWrapper<CrmBackLogDeal> wrapper = new LambdaQueryWrapper<>();
-                wrapper.eq(CrmBackLogDeal::getModel, 5);
-                wrapper.eq(CrmBackLogDeal::getCrmType, CrmEnum.CONTRACT.getType());
-                wrapper.eq(CrmBackLogDeal::getCreateUserId, userId);
-                wrapper.select(CrmBackLogDeal::getTypeId);
-                List<Integer> dealIdList = backLogDealService.listObjs(wrapper, TypeUtils::castToInt);
-                ids.removeAll(dealIdList);
-                if (ids.size()>0) {
-                    checkContract = crmContractService.lambdaQuery().in(CrmContract::getContractId, ids).in(CrmContract::getCheckStatus, 0, 3).count();
-                }
-            }
-            if (checkContract == null) {
-                checkContract = 0;
-            }
-            kv.put("checkContract", checkContract);
-
-            AdminConfig returnVisitRemindConfig = adminService.queryFirstConfigByName("returnVisitRemindConfig").getData();
-            if (Objects.equals(1, returnVisitRemindConfig.getStatus())) {
-                paras.put("remindDay", returnVisitRemindConfig.getValue());
-                Integer returnVisitRemind = mapper.returnVisitRemindNum(paras);
-                kv.put("returnVisitRemind", returnVisitRemind);
-            }
-        }
-
-        if (authList.contains("crm:receivables:index")) {
-            Integer remindReceivablesPlan = mapper.remindReceivablesPlanNum(paras);
-            List<Integer> ids = examineService.queryCrmExamineIdList(2, 1).getData();
-            Integer checkReceivables = null;
-            if (CollUtil.isNotEmpty(ids)) {
-                LambdaQueryWrapper<CrmBackLogDeal> wrapper = new LambdaQueryWrapper<>();
-                wrapper.eq(CrmBackLogDeal::getModel, 6);
-                wrapper.eq(CrmBackLogDeal::getCrmType, CrmEnum.RECEIVABLES.getType());
-                wrapper.eq(CrmBackLogDeal::getCreateUserId, userId);
-                wrapper.select(CrmBackLogDeal::getTypeId);
-                List<Integer> dealIdList = backLogDealService.listObjs(wrapper, TypeUtils::castToInt);
-                ids.removeAll(dealIdList);
-                if (ids.size() > 0) {
-                    checkReceivables = crmReceivablesService.lambdaQuery().in(CrmReceivables::getReceivablesId, ids).in(CrmReceivables::getCheckStatus, 0, 3).count();
-                }
-            }
-            if (checkReceivables == null) {
-                checkReceivables = 0;
-            }
-            kv.put("checkReceivables", checkReceivables);
-            kv.put("remindReceivablesPlan", remindReceivablesPlan);
-        }
-
-        if (authList.contains("crm:invoice:index")) {
-            List<Integer> ids = examineService.queryCrmExamineIdList(3, 1).getData();
-            Integer checkInvoice = null;
-            if (CollUtil.isNotEmpty(ids)) {
-                LambdaQueryWrapper<CrmBackLogDeal> wrapper = new LambdaQueryWrapper<>();
-                wrapper.eq(CrmBackLogDeal::getModel, 10);
-                wrapper.eq(CrmBackLogDeal::getCrmType, CrmEnum.INVOICE.getType());
-                wrapper.eq(CrmBackLogDeal::getCreateUserId, userId);
-                wrapper.select(CrmBackLogDeal::getTypeId);
-                List<Integer> dealIdList = backLogDealService.listObjs(wrapper, TypeUtils::castToInt);
-                ids.removeAll(dealIdList);
-                if(ids.size() > 0){
-                    checkInvoice = crmInvoiceService.lambdaQuery().in(CrmInvoice::getInvoiceId, ids).in(CrmInvoice::getCheckStatus, 0, 3).count();
-                }
-            }
-            if (checkInvoice == null) {
-                checkInvoice = 0;
-            }
-            kv.put("checkInvoice", checkInvoice);
-        }
+        // zqqq 去掉exam依赖
+//        if (authList.contains("crm:contract:index")) {
+//            AdminConfig adminConfig = adminService.queryFirstConfigByName("expiringContractDays").getData();
+//            if (1 == adminConfig.getStatus()) {
+//                paras.put("remindDay", adminConfig.getValue());
+//                Integer endContract = mapper.endContractNum(paras);
+//                kv.put("endContract", endContract);
+//            }
+//            List<Integer> ids = examineService.queryCrmExamineIdList(1, 1).getData();
+//            Integer checkContract = null;
+//            if (CollUtil.isNotEmpty(ids)) {
+//                LambdaQueryWrapper<CrmBackLogDeal> wrapper = new LambdaQueryWrapper<>();
+//                wrapper.eq(CrmBackLogDeal::getModel, 5);
+//                wrapper.eq(CrmBackLogDeal::getCrmType, CrmEnum.CONTRACT.getType());
+//                wrapper.eq(CrmBackLogDeal::getCreateUserId, userId);
+//                wrapper.select(CrmBackLogDeal::getTypeId);
+//                List<Integer> dealIdList = backLogDealService.listObjs(wrapper, TypeUtils::castToInt);
+//                ids.removeAll(dealIdList);
+//                if (ids.size()>0) {
+//                    checkContract = crmContractService.lambdaQuery().in(CrmContract::getContractId, ids).in(CrmContract::getCheckStatus, 0, 3).count();
+//                }
+//            }
+//            if (checkContract == null) {
+//                checkContract = 0;
+//            }
+//            kv.put("checkContract", checkContract);
+//
+//            AdminConfig returnVisitRemindConfig = adminService.queryFirstConfigByName("returnVisitRemindConfig").getData();
+//            if (Objects.equals(1, returnVisitRemindConfig.getStatus())) {
+//                paras.put("remindDay", returnVisitRemindConfig.getValue());
+//                Integer returnVisitRemind = mapper.returnVisitRemindNum(paras);
+//                kv.put("returnVisitRemind", returnVisitRemind);
+//            }
+//        }
+//
+//        if (authList.contains("crm:receivables:index")) {
+//            Integer remindReceivablesPlan = mapper.remindReceivablesPlanNum(paras);
+//            List<Integer> ids = examineService.queryCrmExamineIdList(2, 1).getData();
+//            Integer checkReceivables = null;
+//            if (CollUtil.isNotEmpty(ids)) {
+//                LambdaQueryWrapper<CrmBackLogDeal> wrapper = new LambdaQueryWrapper<>();
+//                wrapper.eq(CrmBackLogDeal::getModel, 6);
+//                wrapper.eq(CrmBackLogDeal::getCrmType, CrmEnum.RECEIVABLES.getType());
+//                wrapper.eq(CrmBackLogDeal::getCreateUserId, userId);
+//                wrapper.select(CrmBackLogDeal::getTypeId);
+//                List<Integer> dealIdList = backLogDealService.listObjs(wrapper, TypeUtils::castToInt);
+//                ids.removeAll(dealIdList);
+//                if (ids.size() > 0) {
+//                    checkReceivables = crmReceivablesService.lambdaQuery().in(CrmReceivables::getReceivablesId, ids).in(CrmReceivables::getCheckStatus, 0, 3).count();
+//                }
+//            }
+//            if (checkReceivables == null) {
+//                checkReceivables = 0;
+//            }
+//            kv.put("checkReceivables", checkReceivables);
+//            kv.put("remindReceivablesPlan", remindReceivablesPlan);
+//        }
+//
+//        if (authList.contains("crm:invoice:index")) {
+//            List<Integer> ids = examineService.queryCrmExamineIdList(3, 1).getData();
+//            Integer checkInvoice = null;
+//            if (CollUtil.isNotEmpty(ids)) {
+//                LambdaQueryWrapper<CrmBackLogDeal> wrapper = new LambdaQueryWrapper<>();
+//                wrapper.eq(CrmBackLogDeal::getModel, 10);
+//                wrapper.eq(CrmBackLogDeal::getCrmType, CrmEnum.INVOICE.getType());
+//                wrapper.eq(CrmBackLogDeal::getCreateUserId, userId);
+//                wrapper.select(CrmBackLogDeal::getTypeId);
+//                List<Integer> dealIdList = backLogDealService.listObjs(wrapper, TypeUtils::castToInt);
+//                ids.removeAll(dealIdList);
+//                if(ids.size() > 0){
+//                    checkInvoice = crmInvoiceService.lambdaQuery().in(CrmInvoice::getInvoiceId, ids).in(CrmInvoice::getCheckStatus, 0, 3).count();
+//                }
+//            }
+//            if (checkInvoice == null) {
+//                checkInvoice = 0;
+//            }
+//            kv.put("checkInvoice", checkInvoice);
+//        }
         redis.setex(CrmCacheKey.CRM_BACKLOG_NUM_CACHE_KEY + userId.toString(), 600, kv);
         return kv;
     }
@@ -289,25 +300,43 @@ public class CrmBackLogServiceImpl implements ICrmBackLogService {
         return basePage;
     }
 
+    /**
+     * 查询es
+     * @param crmBackLogBO
+     * @param crmEnum
+     */
     private void setCrmBackLogBO(CrmBackLogBO crmBackLogBO, CrmEnum crmEnum) {
         Integer type = crmBackLogBO.getType();
         Integer isSub = crmBackLogBO.getIsSub();
-        if (type == 1) {
-            CrmSearchBO.Search search = new CrmSearchBO.Search("nextTime", "datetime", CrmSearchBO.FieldSearchEnum.RANGE);
-            search.setValues(Collections.singletonList("today"));
+        DateTimeFormatter pattern = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String today = LocalDate.now().atStartOfDay().format(pattern);
+        String twoMonthAfter = LocalDate.now().plusMonths(1L).atStartOfDay().format(pattern);
+
+        if (type == 1) { // 需联系
+            // 1. 今天 < 下次联系时间 < 今天 + 2M
+            CrmSearchBO.Search search = new CrmSearchBO.Search("nextTime", "mustdatetime", CrmSearchBO.FieldSearchEnum.RANGE);
+            search.setValues(Arrays.asList(today, twoMonthAfter));
             crmBackLogBO.getData().add(search);
-            crmBackLogBO.getData().add(new CrmSearchBO.Search("lastTime", "datetime", CrmSearchBO.FieldSearchEnum.SCRIPT).setScript(new Script(ScriptType.INLINE, "painless", "if (doc['lastTime'].size()==0) {return false} else {return doc['lastTime'].value.toInstant().toEpochMilli() < doc['nextTime'].value.toInstant().toEpochMilli()}", new HashMap<>())));
-        } else if (type == 2) {
-            crmBackLogBO.getData().add(new CrmSearchBO.Search("nextTime", "datetime", CrmSearchBO.FieldSearchEnum.LT, Collections.singletonList(DateUtil.date().toString())));
-            crmBackLogBO.getData().add(new CrmSearchBO.Search("lastTime", "datetime", CrmSearchBO.FieldSearchEnum.SCRIPT).setScript(new Script(ScriptType.INLINE, "painless", "if (doc['lastTime'].size()==0) {return false} else {return doc['lastTime'].value.toInstant().toEpochMilli() < doc['nextTime'].value.toInstant().toEpochMilli()}", new HashMap<>())));
-        } else if (type == 3) {
-            CrmSearchBO.Search search = new CrmSearchBO.Search("lastTime", "datetime", CrmSearchBO.FieldSearchEnum.RANGE);
-            search.setValues(Collections.singletonList("today"));
+            // 2. 今天 > 最后联系时间
+            crmBackLogBO.getData().add(new CrmSearchBO.Search("lastTime", "mustdatetime", CrmSearchBO.FieldSearchEnum.LT, Collections.singletonList(today)));
+            log.info("setCrmBackLogBO, crmBackLogBO=>{}", JSONObject.toJSONString(search));
+        } else if (type == 2) { // 逾期
+            // 1. 下次联系时间 > 今天
+            crmBackLogBO.getData()
+                    .add(new CrmSearchBO.Search("nextTime", "datetime", CrmSearchBO.FieldSearchEnum.LT, Collections.singletonList(today)));
+//            crmBackLogBO.getData()
+//                    .add(new CrmSearchBO.Search("lastTime", "datetime", CrmSearchBO.FieldSearchEnum.SCRIPT).setScript(new Script(ScriptType.INLINE, "painless", "if (doc['lastTime'].size()==0) {return false} else {return doc['lastTime'].value.toInstant().toEpochMilli() < doc['nextTime'].value.toInstant().toEpochMilli() - 5253120000 }", new HashMap<>())));
+        } else if (type == 3) { // 已联系
+            // 1. 今天 < 下次联系时间 < 今天 + 2M
+            CrmSearchBO.Search search = new CrmSearchBO.Search("nextTime", "mustdatetime", CrmSearchBO.FieldSearchEnum.RANGE);
+            search.setValues(Arrays.asList(today, twoMonthAfter));
             crmBackLogBO.getData().add(search);
-            crmBackLogBO.getData().add(new CrmSearchBO.Search("lastTime", "datetime", CrmSearchBO.FieldSearchEnum.SCRIPT).setScript(new Script(ScriptType.INLINE, "painless", "if (doc['lastTime'].size()==0) {return false} else {return doc['lastTime'].value.toInstant().toEpochMilli() <= doc['nextTime'].value.toInstant().toEpochMilli()}", new HashMap<>())));
+            // 2. 今天 < 最后联系时间
+            crmBackLogBO.getData().add(new CrmSearchBO.Search("lastTime", "mustdatetime", CrmSearchBO.FieldSearchEnum.GT, Collections.singletonList(today)));
         } else {
             throw new CrmException(SystemCodeEnum.SYSTEM_NO_VALID);
         }
+        // TODO:zqqq 解掉注释
         if (isSub == 1) {
             crmBackLogBO.getData().add(new CrmSearchBO.Search("ownerUserId", "text", CrmSearchBO.FieldSearchEnum.IS, Collections.singletonList(UserUtil.getUserId().toString())));
         } else if (isSub == 2) {
@@ -324,7 +353,7 @@ public class CrmBackLogServiceImpl implements ICrmBackLogService {
                 model = CrmBackLogEnum.TODAY_BUSINESS;
             }
             List<String> dealIdList = backLogDealService.queryTypeId(model.getType(), crmEnum.getType(), UserUtil.getUserId());
-            crmBackLogBO.getData().add(new CrmSearchBO.Search("_id", "text", CrmSearchBO.FieldSearchEnum.IS_NOT, dealIdList));
+//            crmBackLogBO.getData().add(new CrmSearchBO.Search("_id", "text", CrmSearchBO.FieldSearchEnum.IS_NOT, dealIdList));
         }
     }
 
@@ -461,8 +490,23 @@ public class CrmBackLogServiceImpl implements ICrmBackLogService {
             return;
         }
         ICrmCustomerService crmCustomerService = ApplicationContextHolder.getBean(ICrmCustomerService.class);
-        crmCustomerService.lambdaUpdate().set(CrmCustomer::getFollowup, 1).in(CrmCustomer::getCustomerId, ids).update();
-        ElasticUtil.updateField(restTemplate, "followup", "1", ids, CrmEnum.CUSTOMER.getIndex());
+//        crmCustomerService.lambdaUpdate().set(CrmCustomer::getFollowup, 1).set(CrmCustomer::getLastTime, DateUtil.date()).in(CrmCustomer::getCustomerId, ids).update();
+        crmCustomerService.lambdaUpdate().set(CrmCustomer::getLastTime, DateUtil.date()).in(CrmCustomer::getCustomerId, ids).update();
+        CrmActivity crmActivity = new CrmActivity();
+        crmActivity.setActivityType(2);
+        crmActivity.setActivityTypeId(8);
+        crmActivity.setCategory("打电话");
+        crmActivity.setContent("联系");
+        crmActivity.setBatchId(IdUtil.simpleUUID());
+        crmActivityService.addCrmActivityRecord(crmActivity);
+//        ElasticUtil.updateField(restTemplate, "followup", "1", ids, CrmEnum.CUSTOMER.getIndex());
+        Optional.ofNullable(ids).orElse(new ArrayList<>()).stream().forEach(id -> {
+            CrmCustomer crmCustomer = crmCustomerService.getById(id);
+            log.info("标记客户为已跟进setCustomerFollowup, crmCustomer=>{}", JSONObject.toJSONString(crmCustomer));
+            ElasticUtil.batchUpdateEsData(restTemplate.getClient(), "customer", crmCustomer.getCustomerId().toString(), crmCustomer.getCustomerName());
+        });
+
+//        ElasticUtil.updateField(restTemplate, map, customer.getCustomerId(), CrmEnum.CUSTOMER.getIndex());
         redis.del(CrmCacheKey.CRM_BACKLOG_NUM_CACHE_KEY + UserUtil.getUserId().toString());
     }
 

@@ -167,15 +167,15 @@ public class CrmCustomerServiceImpl extends BaseServiceImpl<CrmCustomerMapper, C
     public List<List<CrmModelFiledVO>> queryFormPositionField(Integer id) {
         CrmModel crmModel = queryById(id, null);
         List<List<CrmModelFiledVO>> vos = crmFieldService.queryFormPositionFieldVO(crmModel);
-        JSONObject value = new JSONObject();
-        value.put("location", crmModel.get("location"));
-        value.put("address", crmModel.get("address"));
-        value.put("detailAddress", crmModel.get("detailAddress"));
-        value.put("lng", crmModel.get("lng"));
-        value.put("lat", crmModel.get("lat"));
-        CrmModelFiledVO crmModelFiledVO = new CrmModelFiledVO("map_address", FieldEnum.MAP_ADDRESS, "地区定位", 1).setIsNull(0).setValue(value);
-        crmModelFiledVO.setStylePercent(100);
-        vos.add(ListUtil.toList(crmModelFiledVO));
+//        JSONObject value = new JSONObject();
+//        value.put("location", crmModel.get("location"));
+//        value.put("address", crmModel.get("address"));
+//        value.put("detailAddress", crmModel.get("detailAddress"));
+//        value.put("lng", crmModel.get("lng"));
+//        value.put("lat", crmModel.get("lat"));
+//        CrmModelFiledVO crmModelFiledVO = new CrmModelFiledVO("map_address", FieldEnum.MAP_ADDRESS, "地区定位", 1).setIsNull(0).setValue(value);
+//        crmModelFiledVO.setStylePercent(100);
+//        vos.add(ListUtil.toList(crmModelFiledVO));
         return vos;
     }
 

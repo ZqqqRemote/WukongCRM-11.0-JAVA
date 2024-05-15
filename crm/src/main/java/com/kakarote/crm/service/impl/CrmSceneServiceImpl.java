@@ -170,8 +170,10 @@ public class CrmSceneServiceImpl extends BaseServiceImpl<CrmSceneMapper, CrmScen
             fieldList.add(new CrmModelFiledVO("last_time", FieldEnum.DATETIME, "最后跟进时间", 1));
         } else if (CrmEnum.CUSTOMER == crmEnum) {
             List<Object> dealStatusList = new ArrayList<>();
-            dealStatusList.add(new JSONObject().fluentPut("name", "未成交").fluentPut("value", 0));
-            dealStatusList.add(new JSONObject().fluentPut("name", "已成交").fluentPut("value", 1));
+            dealStatusList.add(new JSONObject().fluentPut("name", "待成交").fluentPut("value", 0));
+            dealStatusList.add(new JSONObject().fluentPut("name", "中泰成交").fluentPut("value", 1));
+            dealStatusList.add(new JSONObject().fluentPut("name", "在外成交").fluentPut("value", 2));
+            dealStatusList.add(new JSONObject().fluentPut("name", "其他/转让／处理").fluentPut("value", 3));
             fieldList.add(new CrmModelFiledVO("deal_status", FieldEnum.BUSINESS, "成交状态", 1).setSetting(dealStatusList).setFormType("dealStatus").setType(null));
             fieldList.add(new CrmModelFiledVO("last_time", FieldEnum.DATETIME, "最后跟进时间", 1));
             fieldList.add(new CrmModelFiledVO("detail_address", FieldEnum.TEXT, "详细地址", 1));

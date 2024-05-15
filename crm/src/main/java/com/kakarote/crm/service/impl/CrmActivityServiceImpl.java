@@ -182,7 +182,7 @@ public class CrmActivityServiceImpl extends BaseServiceImpl<CrmActivityMapper, C
         crmActivity.setBatchId(batchId);
         crmActivity.setCreateTime(new Date());
         save(crmActivity);
-        updateNextTime(crmActivity);
+//        updateNextTime(crmActivity);
         if (crmActivity.getType() == 1) {
             crmBackLogDealService.deleteByType(user.getUserId(), CrmEnum.parse(crmActivity.getActivityType()), CrmBackLogEnum.TODAY_CUSTOMER, crmActivity.getActivityTypeId());
             crmBackLogDealService.deleteByType(user.getUserId(), CrmEnum.parse(crmActivity.getActivityType()), CrmBackLogEnum.FOLLOW_LEADS, crmActivity.getActivityTypeId());
@@ -293,9 +293,10 @@ public class CrmActivityServiceImpl extends BaseServiceImpl<CrmActivityMapper, C
         map.put("updateTime", DateUtil.formatDateTime(new Date()));
         if (nextTime != null) {
             map.put("nextTime", DateUtil.formatDateTime(nextTime));
-        }else {
-            map.put("nextTime", null);
         }
+//        else {
+//            map.put("nextTime", null);
+//        }
         updateRequest.doc(map);
         try {
             elasticsearchRestTemplate.getClient().update(updateRequest, RequestOptions.DEFAULT);

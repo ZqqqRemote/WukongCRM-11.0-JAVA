@@ -36,12 +36,12 @@ public class CrmInstrumentSortServiceImpl extends BaseServiceImpl<CrmInstrumentS
         List<CrmInstrumentSort> list = lambdaQuery().select(CrmInstrumentSort::getModelId, CrmInstrumentSort::getIsHidden, CrmInstrumentSort::getList)
                 .eq(CrmInstrumentSort::getUserId, UserUtil.getUserId()).orderByAsc(CrmInstrumentSort::getSort).list();
         if (list.size() == 0) {
-            list.add(new CrmInstrumentSort(1, 0, 1));
-            list.add(new CrmInstrumentSort(5, 0, 1));
-            list.add(new CrmInstrumentSort(7, 0, 1));
+//            list.add(new CrmInstrumentSort(1, 1, 1));
+//            list.add(new CrmInstrumentSort(5, 1, 1));
+//            list.add(new CrmInstrumentSort(7, 1, 1));
             list.add(new CrmInstrumentSort(2, 0, 2));
-            list.add(new CrmInstrumentSort(4, 0, 2));
-            list.add(new CrmInstrumentSort(6, 0, 2));
+//            list.add(new CrmInstrumentSort(4, 1, 2));
+            list.add(new CrmInstrumentSort(6, 0, 1));
         }
         Map<Integer, List<CrmInstrumentSort>> collect = list.stream().collect(Collectors.groupingBy(CrmInstrumentSort::getList));
         return new JSONObject().fluentPut("left", collect.get(1)).fluentPut("right", collect.get(2));

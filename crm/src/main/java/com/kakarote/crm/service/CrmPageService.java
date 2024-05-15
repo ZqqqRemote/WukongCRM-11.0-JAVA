@@ -97,6 +97,7 @@ public interface CrmPageService {
         searchRequest.source(createSourceBuilder(crmSearchBO));
         try {
             SearchResponse searchResponse = getRestTemplate().getClient().search(searchRequest, RequestOptions.DEFAULT);
+            log.info("queryList, searchRequest=>{}, searchResponse=>{}", JSONObject.toJSONString(searchRequest), JSONObject.toJSONString(searchResponse));
             List<Map<String, Object>> mapList = new ArrayList<>();
             List<CrmModelFiledVO> voList = queryDefaultField();
             SearchHit[] hits = searchResponse.getHits().getHits();
@@ -235,6 +236,7 @@ public interface CrmPageService {
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
         sourceBuilder.timeout(new TimeValue(60, TimeUnit.SECONDS));
         //排序以及查询字段
+        // TODO:zqqq 解掉注释
         sort(crmSearchBO, sourceBuilder);
         sourceBuilder.query(createQueryBuilder(crmSearchBO));
         return sourceBuilder;
@@ -253,6 +255,7 @@ public interface CrmPageService {
             for (String search : appendSearch()) {
                 searchBoolQuery.should(QueryBuilders.wildcardQuery(search, "*" + crmSearchBO.getSearch().trim() + "*"));
             }
+            log.info("createQueryBuilder, crmSearchBO=>{}, searchBoolQuery=>{}", JSONObject.toJSONString(crmSearchBO), JSONObject.toJSONString(searchBoolQuery));
             queryBuilder.filter(searchBoolQuery);
         }
 
@@ -284,16 +287,19 @@ public interface CrmPageService {
                 return;
             }
             search(search, queryBuilder);
+            log.info("search=>{}, queryBuilder=>{}", JSONObject.toJSONString(search), JSONObject.toJSONString(queryBuilder.toString()));
         });
         if (crmSearchBO.getPoolId() != null) {
             queryBuilder.filter(QueryBuilders.termQuery("poolId", crmSearchBO.getPoolId()));
         } else {
             queryBuilder.filter(QueryBuilders.existsQuery("ownerUserId"));
+            //TODO:zqqq 解掉注释
             setCrmDataAuth(queryBuilder);
         }
         if (queryBuilder.should().size() > 0) {
             queryBuilder.minimumShouldMatch(1);
         }
+        log.info("createQueryBuilder, queryBuilder=>{}", JSONObject.toJSONString(queryBuilder.toString()));
         return queryBuilder;
     }
 
@@ -447,6 +453,9 @@ public interface CrmPageService {
             case SINGLE_USER:
             case STRUCTURE:
                 ElasticUtil.userSearch(search, queryBuilder);
+                break;
+            case MST_DATETIME:
+                ElasticUtil.mustDateSearch(search, queryBuilder, fieldEnum);
                 break;
             default:
                 ElasticUtil.textSearch(search, queryBuilder);

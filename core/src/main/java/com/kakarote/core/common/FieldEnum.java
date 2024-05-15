@@ -25,6 +25,7 @@ public enum FieldEnum {
     ATTACHMENT(11,"attachment","附件"),
     STRUCTURE(12, "structure","部门"),
     DATETIME(13, "datetime","日期时间"),
+    MST_DATETIME(131, "mustdatetime","必须日期时间"),
     EMAIL(14, "email","邮件"),
     CUSTOMER(15, "customer","客户"),
     BUSINESS(16, "business","商机"),

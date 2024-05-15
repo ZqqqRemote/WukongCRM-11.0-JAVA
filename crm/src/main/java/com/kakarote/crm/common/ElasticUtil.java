@@ -185,7 +185,7 @@ public class ElasticUtil {
 
         List<String> customerIndexList = Lists.newArrayList(CrmEnum.CONTACTS.getIndex(),
                 CrmEnum.BUSINESS.getIndex(), CrmEnum.CONTRACT.getIndex(), CrmEnum.RECEIVABLES.getIndex(),
-                CrmEnum.RETURN_VISIT.getIndex(), CrmEnum.INVOICE.getIndex());
+                CrmEnum.RETURN_VISIT.getIndex(), CrmEnum.INVOICE.getIndex(), CrmEnum.CUSTOMER.getIndex());
 
         customerPropertiesList.add(new EsUpdatePropertiesBO("customerId", "customerName", customerIndexList));
         updateMap.put("customer", customerPropertiesList);
@@ -509,6 +509,67 @@ public class ElasticUtil {
                 builder.gte(fieldEnum == FieldEnum.DATETIME ? DateUtil.formatDateTime(beginDate) : DateUtil.formatDate(beginDate));
                 builder.lte(fieldEnum == FieldEnum.DATETIME ? DateUtil.formatDateTime(endDate) : DateUtil.formatDate(endDate));
                 queryBuilder.filter(builder);
+                break;
+            }
+        }
+    }
+
+    public static void mustDateSearch(CrmSearchBO.Search search, BoolQueryBuilder queryBuilder, FieldEnum fieldEnum) {
+        List<String> values = search.getValues();
+        if (values.size() == 0) {
+            throw new CrmException(SystemCodeEnum.SYSTEM_NO_VALID);
+        }
+        switch (search.getSearchEnum()) {
+            case IS: {
+                queryBuilder.must(QueryBuilders.termQuery(search.getName(), search.getValues().get(0)));
+                break;
+            }
+
+            case IS_NULL:
+                isNullSearch(search, queryBuilder);
+                break;
+            case IS_NOT_NULL:
+                isNotNullSearch(search, queryBuilder);
+                break;
+            case GT: {
+                RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(search.getName());
+                rangeQuery.gt(search.getValues().get(0));
+                queryBuilder.must(rangeQuery);
+                break;
+            }
+            case EGT: {
+                RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(search.getName());
+                rangeQuery.gte(search.getValues().get(0));
+                queryBuilder.must(rangeQuery);
+                break;
+            }
+            case LT: {
+                RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(search.getName());
+                rangeQuery.lt(search.getValues().get(0));
+                queryBuilder.must(rangeQuery);
+                break;
+            }
+            case ELT: {
+                RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(search.getName());
+                rangeQuery.lte(search.getValues().get(0));
+                queryBuilder.must(rangeQuery);
+                break;
+            }
+            case RANGE: {
+                BiParams biParams = new BiParams();
+                if (search.getValues().size() > 1) {
+                    biParams.setStartTime(values.get(0));
+                    biParams.setEndTime(values.get(1));
+                } else {
+                    biParams.setType(search.getValues().get(0));
+                }
+                BiTimeUtil.BiTimeEntity timeEntity = BiTimeUtil.analyzeTime(biParams);
+                Date beginDate = timeEntity.getBeginDate();
+                Date endDate = timeEntity.getEndDate();
+                RangeQueryBuilder builder = QueryBuilders.rangeQuery(search.getName());
+                builder.gte(fieldEnum == FieldEnum.MST_DATETIME ? DateUtil.formatDateTime(beginDate) : DateUtil.formatDate(beginDate));
+                builder.lte(fieldEnum == FieldEnum.MST_DATETIME ? DateUtil.formatDateTime(endDate) : DateUtil.formatDate(endDate));
+                queryBuilder.must(builder);
                 break;
             }
         }
